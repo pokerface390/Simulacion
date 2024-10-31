@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de Dominó Automático</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .layout-container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 1800px;
+    }
+
+    .game-stats {
+      width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .strategy-panel {
+      width: 300px;
+      background-color: #34495e;
+      border: 2px solid #ecf0f1;
+      border-radius: 10px;
+      padding: 15px;
+      height: 800px;
+      overflow-y: auto;
+    }
+
+    .strategy-section {
+      margin-bottom: 20px;
+      padding: 10px;
+      background-color: #2c3e50;
+      border-radius: 5px;
+    }
+
+    .strategy-section h3 {
+      color: #3498db;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .strategy-section ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .strategy-section li {
+      margin-bottom: 8px;
+      line-height: 1.4;
+    }
+
+    .contenedor-juego {
+      position: relative;
+      width: 1000px;
+      height: 800px;
+      background-color: #34495e;
+      border: 2px solid #ecf0f1;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: 120px 1fr 120px;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .movimientos {
+      background-color: #2c3e50;
+      border: 2px solid #ecf0f1;
+      border-radius: 5px;
+      padding: 10px;
+      height: 400px;
+      overflow-y: auto;
+      font-size: 16px;
+    }
+
+    .probabilidades {
+      background-color: #2c3e50;
+      border: 2px solid #ecf0f1;
+      border-radius: 5px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .barra-probabilidad {
+      height: 30px;
+      background-color: #3498db;
+      border-radius: 5px;
+      transition: width 0.5s ease;
+    }
+
+    .jugador-stats {
+      margin: 5px 0;
+    }
+
+    .tablero {
+      grid-column: 2;
+      grid-row: 2;
+      background-color: #2c3e50;
+      border: 2px solid #ecf0f1;
+      border-radius: 10px;
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      min-height: 200px;
+    }
+
+    .jugador {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background-color: #2c3e50;
+      border: 2px solid #ecf0f1;
+      border-radius: 5px;
+    }
+
+    .jugador-izquierda {
+      grid-column: 1;
+      grid-row: 2;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .jugador-derecha {
+      grid-column: 3;
+      grid-row: 2;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .jugador-arriba {
+      grid-column: 2;
+      grid-row: 1;
+      justify-content: center;
+    }
+
+    .jugador-abajo {
+      grid-column: 2;
+      grid-row: 3;
+      justify-content: center;
+    }
+
+    .ficha {
+      width: 40px;
+      height: 80px;
+      background-color: #f5f5f5;
+      border: 2px solid #333;
+      border-radius: 5px;
+      margin: 2px;
+      position: relative;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .ficha.mula {
+      height: 40px;
+      width: 80px;
+    }
+
+    .ficha-mitad {
+      position: absolute;
+      width: 100%;
+      height: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .ficha-mitad:first-child {
+      top: 0;
+      border-bottom: 2px solid #333;
+    }
+
+    .ficha-mitad:last-child {
+      bottom: 0;
+    }
+
+    .ficha.mula .ficha-mitad {
+      width: 50%;
+      height: 100%;
+    }
+
+    .ficha.mula .ficha-mitad:first-child {
+      left: 0;
+      border-bottom: none;
+      border-right: 2px solid #333;
+    }
+
+    .ficha.mula .ficha-mitad:last-child {
+      right: 0;
+    }
+
+    .punto {
+      width: 6px;
+      height: 6px;
+      background-color: #000;
+      border-radius: 50%;
+      position: absolute;
+    }
+
+    /* Posiciones de los puntos */
+    .punto-1 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    
+    .punto-2-1 { top: 25%; left: 50%; transform: translate(-50%, -50%); }
+    .punto-2-2 { top: 75%; left: 50%; transform: translate(-50%, -50%); }
+    
+    .punto-3-1 { top: 20%; left: 20%; }
+    .punto-3-2 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .punto-3-3 { bottom: 20%; right: 20%; }
+    
+    .punto-4-1 { top: 20%; left: 20%; }
+    .punto-4-2 { top: 20%; right: 20%; }
+    .punto-4-3 { bottom: 20%; left: 20%; }
+    .punto-4-4 { bottom: 20%; right: 20%; }
+    
+    .punto-5-1 { top: 20%; left: 20%; }
+    .punto-5-2 { top: 20%; right: 20%; }
+    .punto-5-3 { bottom: 20%; left: 20%; }
+    .punto-5-4 { bottom: 20%; right: 20%; }
+    .punto-5-5 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    
+    .punto-6-1 { top: 20%; left: 20%; }
+    .punto-6-2 { top: 50%; left: 20%; transform: translateY(-50%); }
+    .punto-6-3 { bottom: 20%; left: 20%; }
+    .punto-6-4 { top: 20%; right: 20%; }
+    .punto-6-5 { top: 50%; right: 20%; transform: translateY(-50%); }
+    .punto-6-6 { bottom: 20%; right: 20%; }
+
+    .jugador-izquierda .ficha {
+      transform: rotate(90deg);
+    }
+
+    .jugador-derecha .ficha {
+      transform: rotate(90deg);
+    }
+
+    .jugador-arriba .ficha {
+      transform: rotate(180deg);
+    }
+
+    .tablero .ficha {
+      transform: rotate(90deg);
+    }
+
+    .tablero .ficha.rotada {
+      transform: rotate(-90deg);
+    }
+
+    .ganador {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(46, 204, 113, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      z-index: 100;
+      display: none;
+    }
+
+    .fase-actual {
+      background-color: #3498db;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Juego de Dominó Automático</h1>
+  <div class="layout-container">
+    <div class="game-stats">
+      <div class="movimientos" id="movimientos">
+        <h3>Movimientos</h3>
+      </div>
+      <div class="probabilidades" id="probabilidades">
+        <h3>Probabilidad de Ganar</h3>
+      </div>
+    </div>
+    <div class="contenedor-juego">
+      <div class="jugador jugador-arriba" id="fichas-jugador2"></div>
+      <div class="jugador jugador-izquierda" id="fichas-jugador1"></div>
+      <div class="tablero" id="tablero"></div>
+      <div class="jugador jugador-derecha" id="fichas-jugador3"></div>
+      <div class="jugador jugador-abajo" id="fichas-jugador4"></div>
+      <div class="ganador" id="ganador"></div>
+    </div>
+    <div class="strategy-panel">
+      <h2>Estrategia Jugador 1</h2>
+      <div class="fase-actual" id="fase-actual">Fase: Inicial</div>
+      
+      <div class="strategy-section">
+        <h3>Fase Inicial</h3>
+        <ul>
+          <li>Identifica tus mulas (fichas dobles)</li>
+          <li>Cuenta cuántas fichas tienes de cada número</li>
+          <li>Identifica tus secuencias más largas</li>
+          <li>Evalúa la calidad de tu mano inicial</li>
+        </ul>
+      </div>
+
+      <div class="strategy-section">
+        <h3>Apertura</h3>
+        <ul>
+          <li>Si tienes la mula más alta, es obligatorio jugarla</li>
+          <li>Si no, guarda tus mulas para momentos estratégicos</li>
+          <li>Observa qué números juegan los otros jugadores</li>
+          <li>Establece un plan basado en tus secuencias más fuertes</li>
+        </ul>
+      </div>
+
+      <div class="strategy-section">
+        <h3>Medio Juego</h3>
+        <ul>
+          <li>Prioriza jugar fichas que no formen parte de secuencias</li>
+          <li>Mantén un balance de números diferentes</li>
+          <li>Si tienes varias opciones, juega la ficha más alta</li>
+          <li>Observa los números que se trancan</li>
+          <li>Mantén control de al menos un extremo del juego</li>
+        </ul>
+      </div>
+
+      <div class="strategy-section">
+        <h3>Final del Juego</h3>
+        <ul>
+          <li>Cuenta las fichas jugadas de cada número</li>
+          <li>Identifica números que están por trancarse</li>
+          <li>Si tienes pocas fichas, intenta cerrar el juego</li>
+          <li>Guarda una ficha versátil para el final</li>
+          <li>Evalúa si es mejor trancar o mantener el juego abierto</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const todasLasFichas = [];
+    for (let i = 0; i <= 6; i++) {
+      for (let j = i; j <= 6; j++) {
+        todasLasFichas.push({ numero1: i, numero2: j });
+      }
+    }
+
+    const jugadores = [[], [], [], []];
+    const tableroFichas = [];
+    const tableroDiv = document.getElementById("tablero");
+    const movimientosDiv = document.getElementById("movimientos");
+    const ganadorDiv = document.getElementById("ganador");
+    const faseActualDiv = document.getElementById("fase-actual");
+    let turnoActual = 0;
+    let fichasJugadas = 0;
+
+    function actualizarFaseJuego() {
+      const totalFichas = 28;
+      const porcentajeJugado = (fichasJugadas / totalFichas) * 100;
+      
+      if (porcentajeJugado < 15) {
+        faseActualDiv.textContent = "Fase: Inicial";
+      } else if (porcentajeJugado < 40) {
+        faseActualDiv.textContent = "Fase: Apertura";
+      } else if (porcentajeJugado < 75) {
+        faseActualDiv.textContent = "Fase: Medio Juego";
+      } else {
+        faseActualDiv.textContent = "Fase: Final del Juego";
+      }
+    }
+
+    function actualizarProbabilidades() {
+      const probabilidadesDiv = document.getElementById('probabilidades');
+      probabilidadesDiv.innerHTML = '<h3>Probabilidad de Ganar</h3>';
+
+      const totalFichas = jugadores.reduce((sum, jugador) => sum + jugador.length, 0);
+
+      jugadores.forEach((fichasJugador, index) => {
+        const probabilidad = Math.max(5, Math.round((1 - fichasJugador.length / totalFichas) * 100));
+
+        const jugadorStats = document.createElement('div');
+        jugadorStats.className = 'jugador-stats';
+
+        const label = document.createElement('div');
+        label.textContent = `Jugador ${index + 1} (${fichasJugador.length} fichas)`;
+
+        const barra = document.createElement('div');
+        barra.className = 'barra-probabilidad';
+        barra.style.width = `${probabilidad}%`;
+        barra.style.backgroundColor = `hsl(${120 - (fichasJugador.length * 10)}, 70%, 50%)`;
+
+        const porcentaje = document.createElement('div');
+        porcentaje.textContent = `${probabilidad}%`;
+
+        jugadorStats.appendChild(label);
+        jugadorStats.appendChild(barra);
+        jugadorStats.appendChild(porcentaje);
+        probabilidadesDiv.appendChild(jugadorStats);
+      });
+    }
+
+    function crearPuntos(valor, contenedor) {
+      switch (valor) {
+        case 0:
+          break;
+        case 1:
+          contenedor.innerHTML += '<div class="punto punto-1"></div>';
+          break;
+        case 2:
+          contenedor.innerHTML += `
+            <div class="punto punto-2-1"></div>
+            <div class="punto punto-2-2"></div>`;
+          break;
+        case 3:
+          contenedor.innerHTML += `
+            <div class="punto punto-3-1"></div>
+            <div class="punto punto-3-2"></div>
+            <div class="punto punto-3-3"></div>`;
+          break;
+        case 4:
+          contenedor.innerHTML += `
+            <div class="punto punto-4-1"></div>
+            <div class="punto punto-4-2"></div>
+            <div class="punto punto-4-3"></div>
+            <div class="punto punto-4-4"></div>`;
+          break;
+        case 5:
+          contenedor.innerHTML += `
+            <div class="punto punto-5-1"></div>
+            <div class="punto punto-5-2"></div>
+            <div class="punto punto-5-3"></div>
+            <div class="punto punto-5-4"></div>
+            <div class="punto punto-5-5"></div>`;
+          break;
+        case 6:
+          contenedor.innerHTML += `
+            <div class="punto punto-6-1"></div>
+            <div class="punto punto-6-2"></div>
+            <div class="punto punto-6-3"></div>
+            <div class="punto punto-6-4"></div>
+            <div class="punto punto-6-5"></div>
+            <div class="punto punto-6-6"></div>`;
+          break;
+      }
+    }
+
+    function crearFicha(numero1, numero2) {
+      const ficha = document.createElement('div');
+      ficha.className = `ficha ${numero1 === numero2 ? 'mula' : ''}`;
+
+      const mitad1 = document.createElement('div');
+      mitad1.className = 'ficha-mitad';
+      crearPuntos(numero1, mitad1);
+
+      const mitad2 = document.createElement('div');
+      mitad2.className = 'ficha-mitad';
+      crearPuntos(numero2, mitad2);
+
+      ficha.appendChild(mitad1);
+      ficha.appendChild(mitad2);
+
+      return ficha;
+    }
+
+    function repartirFichas() {
+      const fichasDisponibles = [...todasLasFichas];
+      
+      // Repartir 7 fichas a cada jugador
+      for (let i = 0; i < 7; i++) {
+        for (let j = 0; j < 4; j++) {
+          const index = Math.floor(Math.random() * fichasDisponibles.length);
+          const ficha = fichasDisponibles.splice(index, 1)[0];
+          jugadores[j].push(ficha);
+        }
+      }
+
+      // Mostrar fichas de cada jugador
+      jugadores.forEach((fichasJugador, index) => {
+        const contenedor = document.getElementById(`fichas-jugador${index + 1}`);
+        contenedor.innerHTML = '';
+        fichasJugador.forEach(ficha => {
+          contenedor.appendChild(crearFicha(ficha.numero1, ficha.numero2));
+        });
+      });
+    }
+
+    function jugarFicha() {
+      const jugador = jugadores[turnoActual];
+      if (jugador.length === 0) return;
+
+      const fichaIndex = Math.floor(Math.random() * jugador.length);
+      const ficha = jugador.splice(fichaIndex, 1)[0];
+      
+      tableroFichas.push(ficha);
+      tableroDiv.appendChild(crearFicha(ficha.numero1, ficha.numero2));
+      
+      const contenedor = document.getElementById(`fichas-jugador${turnoActual + 1}`);
+      contenedor.innerHTML = '';
+      jugador.forEach(f => contenedor.appendChild(crearFicha(f.numero1, f.numero2)));
+
+      movimientosDiv.innerHTML += `<p>Jugador ${turnoActual + 1} jugó [${ficha.numero1}|${ficha.numero2}]</p>`;
+      movimientosDiv.scrollTop = movimientosDiv.scrollHeight;
+
+      fichasJugadas++;
+      actualizarFaseJuego();
+      actualizarProbabilidades();
+
+      // Verificar si hay ganador
+      if (jugador.length === 0) {
+        ganadorDiv.textContent = `¡Jugador ${turnoActual + 1} ha ganado!`;
+        ganadorDiv.style.display = 'block';
+        return;
+      }
+
+      turnoActual = (turnoActual + 1) % 4;
+      setTimeout(jugarFicha, 1000);
+    }
+
+    // Iniciar juego
+    repartirFichas();
+    actualizarProbabilidades();
+    setTimeout(jugarFicha, 1000);
+  </script>
+</body>
+</html>
